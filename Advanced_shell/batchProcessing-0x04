@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# This script fetches data for multiple Pokémon in parallel.
+
+POKEMON_LIST=("Bulbasaur" "Ivysaur" "Venusaur" "Charmander" "Charmeleon")
+OUTPUT_DIR="pokemon_data_parallel"
+MAX_RETRIES=3
+RETRY_DELAY=1 # seconds
+
+# Create the output directory if it doesn't exist
+mkdir -p "$OUTPUT_DIR"
+
+# Define a function to fetch data for a single Pokémon
+fetch_pokemon() {
+  local pokemon=$1
+  local pokemon_lower=$(echo "$pokemon" | tr '[:upper:]' '[:lower:]')
+  local output_file="${OUTPUT_DIR}/${pokemon_lower}.json"
+  local api_url="https://pokeapi.co/api/v2/pokemon/${pokemon_lower}"
+  
+  echo "Fetching data for ${pokemon_lower}..."
+  
+  local success=false
+  for ((i=1; i<=MAX_RETRIES; i++)); do
+    local http_status=$(curl -s -w "%{http_code}" -o "$output_file" "$api_url")
+    
+    if [ "$http_status" -eq 200 ]; then
+      echo "Saved data to ${output_file} ✅"
+      success=true
+      break
+    else
+      # In parallel mode, direct error messages are messy. Log them instead.
+      # For this example, we'll keep it simple and just echo to stderr.
+      echo "Attempt $i/$MAX_RETRIES failed for ${pokemon_lower} (Status: $http_status)." >&2
+      if [ "$i" -lt "$MAX_RETRIES" ]; then
+        sleep "$RETRY_DELAY"
+      fi
+    fi
+  done
+  
+  if [ "$success" = false ]; then
+    echo "Error: Failed to retrieve data for ${pokemon_lower} after $MAX_RETRIES attempts." >&2
+    rm -f "$output_file"
+  fi
+}
+
+# Loop through the Pokémon list and start a background process for each
+for pokemon in "${POKEMON_LIST[@]}"; do
+  # The function is executed in the background
+  fetch_pokemon "$pokemon" &
+done
+
+# Wait for all background processes to complete
+wait
+
+echo "Parallel batch fetch complete."

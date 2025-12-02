@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# This script extracts data from a JSON file and formats it.
+# It uses only jq, awk, and sed as per the requirements.
+
+DATA_FILE="data.json"
+
+if [ ! -f "$DATA_FILE" ]; then
+    echo "Error: $DATA_FILE not found. Please run the apiAutomation-0x00 script first."
+    exit 1
+fi
+
+# Use jq to extract the required fields, then pipe to awk for formatting.
+# jq extracts name, primary type, weight (hectograms), and height (decimetres).
+# awk converts units and formats the final output sentence.
+jq -r '[.name, .types[0].type.name, .weight, .height] | @tsv' "$DATA_FILE" |
+awk -F'\t' '{ 
+    name = $1
+    type = $2
+    weight_kg = $3 / 10
+    height_m = $4 / 10
+
+    # Capitalize the first letter of name and type
+    cap_name = toupper(substr(name, 1, 1)) substr(name, 2)
+    cap_type = toupper(substr(type, 1, 1)) substr(type, 2)
+
+    printf "%s is of type %s, weighs %gkg, and is %gm tall.\n", cap_name, cap_type, weight_kg, height_m
+}'

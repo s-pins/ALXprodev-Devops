@@ -1,0 +1,51 @@
+#!/bin/bash
+
+# This script fetches data for a list of Pokémon, with error handling and retry logic.
+
+POKEMON_LIST=("Bulbasaur" "Ivysaur" "Venusaur" "Charmander" "Charmeleon")
+OUTPUT_DIR="pokemon_data"
+MAX_RETRIES=3
+RETRY_DELAY=1 # seconds
+
+# Create the output directory if it doesn't exist
+mkdir -p "$OUTPUT_DIR"
+
+# Loop through the list of Pokémon
+for pokemon in "${POKEMON_LIST[@]}"; do
+  # API expects lowercase names
+  pokemon_lower=$(echo "$pokemon" | tr '[:upper:]' '[:lower:]')
+  output_file="${OUTPUT_DIR}/${pokemon_lower}.json"
+  api_url="https://pokeapi.co/api/v2/pokemon/${pokemon_lower}"
+  
+  echo "Fetching data for ${pokemon_lower}..."
+  
+  success=false
+  for ((i=1; i<=MAX_RETRIES; i++)); do
+    http_status=$(curl -s -w "%{http_code}" -o "$output_file" "$api_url")
+    
+    if [ "$http_status" -eq 200 ]; then
+      echo "Saved data to ${output_file} ✅"
+      success=true
+      break
+    else
+      echo "Attempt $i/$MAX_RETRIES failed for ${pokemon_lower}. HTTP Status: $http_status."
+      if [ "$i" -lt "$MAX_RETRIES" ]; then
+        echo "Retrying in $RETRY_DELAY second(s)..."
+        sleep "$RETRY_DELAY"
+      fi
+    fi
+  done
+  
+  if [ "$success" = false ]; then
+    echo "Error: Failed to retrieve data for ${pokemon_lower} after $MAX_RETRIES attempts." >&2
+    # Optional: Log to a file
+    # echo "$(date): Failed for ${pokemon_lower}" >> fetch_errors.log
+    # Clean up the likely empty/error file
+    rm -f "$output_file"
+  fi
+  
+  # Add a small delay between fetching different Pokémon to avoid rate-limiting
+  sleep 1
+done
+
+echo "Batch fetch complete."
