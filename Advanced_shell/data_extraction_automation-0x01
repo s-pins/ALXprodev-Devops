@@ -2,6 +2,7 @@
 
 # This script extracts data from a JSON file and formats it.
 # It uses only jq, awk, and sed as per the requirements.
+# The output format is: "$name is of type $type, weighs ${formatted_weight}kg, and is ${formatted_height}m tall."
 
 DATA_FILE="data.json"
 

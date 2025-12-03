@@ -2,7 +2,7 @@
 
 # This script fetches data for a list of Pokémon, with error handling and retry logic.
 
-POKEMON_LIST=("Bulbasaur" "Ivysaur" "Venusaur" "Charmander" "Charmeleon")
+POKEMON_LIST=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 OUTPUT_DIR="pokemon_data"
 MAX_RETRIES=3
 RETRY_DELAY=1 # seconds
@@ -12,12 +12,10 @@ mkdir -p "$OUTPUT_DIR"
 
 # Loop through the list of Pokémon
 for pokemon in "${POKEMON_LIST[@]}"; do
-  # API expects lowercase names
-  pokemon_lower=$(echo "$pokemon" | tr '[:upper:]' '[:lower:]')
-  output_file="${OUTPUT_DIR}/${pokemon_lower}.json"
-  api_url="https://pokeapi.co/api/v2/pokemon/${pokemon_lower}"
+  output_file="${OUTPUT_DIR}/${pokemon}.json"
+  api_url="https://pokeapi.co/api/v2/pokemon/${pokemon}"
   
-  echo "Fetching data for ${pokemon_lower}..."
+  echo "Fetching data for ${pokemon}..."
   
   success=false
   for ((i=1; i<=MAX_RETRIES; i++)); do

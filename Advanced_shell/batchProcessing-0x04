@@ -2,7 +2,10 @@
 
 # This script fetches data for multiple Pokémon in parallel.
 
-POKEMON_LIST=("Bulbasaur" "Ivysaur" "Venusaur" "Charmander" "Charmeleon")
+# Ensure background jobs are killed on script exit
+trap 'kill $(jobs -p) 2>/dev/null' EXIT
+
+POKEMON_LIST=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
 OUTPUT_DIR="pokemon_data_parallel"
 MAX_RETRIES=3
 RETRY_DELAY=1 # seconds
@@ -13,11 +16,10 @@ mkdir -p "$OUTPUT_DIR"
 # Define a function to fetch data for a single Pokémon
 fetch_pokemon() {
   local pokemon=$1
-  local pokemon_lower=$(echo "$pokemon" | tr '[:upper:]' '[:lower:]')
-  local output_file="${OUTPUT_DIR}/${pokemon_lower}.json"
-  local api_url="https://pokeapi.co/api/v2/pokemon/${pokemon_lower}"
+  local output_file="${OUTPUT_DIR}/${pokemon}.json"
+  local api_url="https://pokeapi.co/api/v2/pokemon/${pokemon}"
   
-  echo "Fetching data for ${pokemon_lower}..."
+  echo "Fetching data for ${pokemon}..."
   
   local success=false
   for ((i=1; i<=MAX_RETRIES; i++)); do

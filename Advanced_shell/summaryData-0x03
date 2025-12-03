@@ -46,10 +46,9 @@ echo ""
 cat "$REPORT_FILE"
 echo ""
 
-# Use awk to calculate and print the average height and weight
-awk -F',' ' 
-    # Skip the header row
-    NR > 1 {
+# Use sed to remove the header and awk to calculate and print the average
+sed 1d "$REPORT_FILE" | awk -F',' '
+    {
         height_sum += $2
         weight_sum += $3
         count++
@@ -60,4 +59,4 @@ awk -F',' '
             printf "Average Weight: %.2f kg\n", weight_sum / count
         }
     }
-' "$REPORT_FILE"
+'
